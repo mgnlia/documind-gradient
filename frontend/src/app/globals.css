@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0a0a0f;
+  --card: #13131f;
+  --border: #1e1e35;
+  --do-blue: #0069FF;
+}
+
+body {
+  background: var(--bg);
+  color: #e5e7eb;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.card {
+  @apply bg-[#13131f] border border-[#1e1e35] rounded-xl p-5;
+}
+
+.btn-primary {
+  @apply bg-[#0069FF] hover:bg-[#0052cc] text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.tab {
+  @apply px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 cursor-pointer;
+}
+
+.tab-active {
+  @apply bg-[#0069FF]/20 text-[#0069FF];
+}
+
+.tab-inactive {
+  @apply text-gray-400 hover:text-gray-200 hover:bg-white/5;
+}
+
+/* Markdown styles */
+.markdown h1 { @apply text-2xl font-bold text-white mb-4 mt-6; }
+.markdown h2 { @apply text-xl font-bold text-white mb-3 mt-5; }
+.markdown h3 { @apply text-lg font-semibold text-gray-200 mb-2 mt-4; }
+.markdown p { @apply text-gray-300 mb-3 leading-relaxed; }
+.markdown ul { @apply list-disc list-inside mb-3 space-y-1; }
+.markdown ol { @apply list-decimal list-inside mb-3 space-y-1; }
+.markdown li { @apply text-gray-300; }
+.markdown code { @apply bg-[#0d0d1a] text-[#60a5fa] px-1.5 py-0.5 rounded text-sm font-mono; }
+.markdown pre { @apply bg-[#0d0d1a] border border-[#1e1e35] rounded-lg p-4 overflow-x-auto mb-4; }
+.markdown pre code { @apply bg-transparent text-gray-300 p-0; }
+.markdown a { @apply text-[#0069FF] hover:underline; }
+.markdown blockquote { @apply border-l-4 border-[#0069FF] pl-4 text-gray-400 italic my-3; }
+.markdown table { @apply w-full border-collapse mb-4; }
+.markdown th { @apply bg-[#0d0d1a] text-gray-300 font-semibold px-3 py-2 text-left border border-[#1e1e35]; }
+.markdown td { @apply px-3 py-2 border border-[#1e1e35] text-gray-400; }
+.markdown strong { @apply text-white font-semibold; }
+.markdown hr { @apply border-[#1e1e35] my-4; }

@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://documind-backend.up.railway.app";
+const API = process.env.NEXT_PUBLIC_API_URL || "https://documind-backend-theta.vercel.app";
 
 interface AnalyzeResponse {
   repo: string;

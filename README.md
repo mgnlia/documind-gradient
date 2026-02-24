@@ -31,8 +31,14 @@ Developers waste hours writing documentation. DocuMind eliminates that:
 | AI Inference | DigitalOcean Gradient (Llama 3.3 70B) |
 | Backend | Python 3.12 + FastAPI + uv |
 | Frontend | Next.js 14 + TypeScript + Tailwind CSS |
-| Deploy | Vercel (frontend) + Railway (backend) |
+| Deploy | Vercel (frontend + backend serverless) |
 | GitHub API | File tree ingestion |
+
+## 🚀 Live Demo
+
+- **Frontend:** https://frontend-self-ten-84.vercel.app
+- **Backend API:** https://documind-backend-theta.vercel.app
+- **API Docs:** https://documind-backend-theta.vercel.app/docs
 
 ## 🚀 Quick Start
 
@@ -52,14 +58,6 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
 
-### Docker (backend)
-
-```bash
-cd backend
-docker build -t documind-backend .
-docker run -p 8000:8000 -e GRADIENT_API_KEY=your_key documind-backend
-```
-
 ## ⚙️ Environment Variables
 
 | Variable | Required | Description |
@@ -72,9 +70,9 @@ docker run -p 8000:8000 -e GRADIENT_API_KEY=your_key documind-backend
 ## 🏗️ Architecture
 
 ```
-User → Next.js Frontend
+User → Next.js Frontend (Vercel)
          ↓
-      FastAPI Backend
+      FastAPI Backend (Vercel Serverless)
          ↓
    GitHub API (fetch files)
          ↓

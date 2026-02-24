@@ -73,13 +73,29 @@ def parse_repo_url(url: str) -> tuple[str, str]:
         raise ValueError(f"Invalid GitHub URL: {url}")
     return match.group(1), match.group(2).replace(".git", "")
 
+def should_include(file_item: dict) -> bool:
+    """Determine if a file should be included in analysis."""
+    path = file_item["path"]
+    parts = path.split("/")
+    # Skip files inside ignored directories
+    if any(p in SKIP_DIRS for p in parts[:-1]):
+        return False
+    # Skip binary/unreadable extensions
+    _, ext = os.path.splitext(path.lower())
+    if ext in SKIP_EXTS:
+        return False
+    # Skip very large files
+    if int(file_item.get("size", 0)) > 80_000:
+        return False
+    return True
+
 async def fetch_repo_contents(owner: str, repo: str) -> tuple[list[dict], str]:
     """Fetch repo file tree and key file contents via GitHub API."""
-    headers = {}
+    headers = {"Accept": "application/vnd.github+json"}
     if gh_token := os.getenv("GITHUB_TOKEN"):
-        headers["Authorization"] = f"token {gh_token}"
+        headers["Authorization"] = f"Bearer {gh_token}"
 
-    async with httpx.AsyncClient(headers=headers, timeout=30) as client:
+    async with httpx.AsyncClient(headers=headers, timeout=30, follow_redirects=True) as client:
         # Get file tree
         tree_url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/HEAD?recursive=1"
         resp = await client.get(tree_url)
@@ -94,30 +110,15 @@ async def fetch_repo_contents(owner: str, repo: str) -> tuple[list[dict], str]:
             if item["type"] == "blob"
         ]
 
-        # Filter files
-        def should_include(path: str) -> bool:
-            parts = path.split("/")
-            if any(p in SKIP_DIRS for p in parts[:-1]):
-                return False
-            _, ext = os.path.splitext(path.lower())
-            if ext in SKIP_EXTS:
-                return False
-            if int(item.get("size", 0)) > 80_000:
-                return False
-            return True
-
-        filtered = [f for f in all_files if should_include(f["path"])]
+        # Filter files using the standalone function (no closure scope issues)
+        filtered = [f for f in all_files if should_include(f)]
 
         # Prioritize important files, then take up to 30 total
         priority = [f for f in filtered if f["path"].split("/")[-1].lower() in PRIORITY_FILES]
         others = [f for f in filtered if f not in priority]
         selected = (priority + others)[:30]
 
-        # Fetch file contents
-        contents = []
-        fetch_tasks = []
-
-        async def fetch_file(file_item):
+        async def fetch_file(file_item: dict) -> Optional[dict]:
             raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/HEAD/{file_item['path']}"
             try:
                 r = await client.get(raw_url)
@@ -145,7 +146,14 @@ def build_context(contents: list[dict]) -> str:
 async def llm_complete(prompt: str, system: str) -> str:
     """Call DO Gradient inference."""
     if MOCK_MODE:
-        return f"[MOCK — set GRADIENT_API_KEY for real output]\n\n{prompt[:200]}..."
+        # In mock mode, return a structured placeholder that looks real
+        return (
+            f"*[Demo mode — add GRADIENT_API_KEY for real AI output]*\n\n"
+            f"This is a placeholder response. The system prompt was:\n\n"
+            f"> {system}\n\n"
+            f"With real DO Gradient credentials, this section would contain "
+            f"AI-generated content based on the actual repository files."
+        )
 
     resp = await gradient.chat.completions.create(
         model=MODEL,
@@ -281,12 +289,12 @@ async def analyze_repo(req: AnalyzeRequest):
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    readme = results[0] if not isinstance(results[0], Exception) else f"Error: {results[0]}"
-    architecture = results[1] if not isinstance(results[1], Exception) else f"Error: {results[1]}"
-    api_docs = results[2] if not isinstance(results[2], Exception) else f"Error: {results[2]}"
+    readme = results[0] if not isinstance(results[0], Exception) else f"Error generating README: {results[0]}"
+    architecture = results[1] if not isinstance(results[1], Exception) else f"Error generating architecture: {results[1]}"
+    api_docs = results[2] if not isinstance(results[2], Exception) else f"Error generating API docs: {results[2]}"
     answer = None
     if req.question:
-        answer = results[3] if not isinstance(results[3], Exception) else f"Error: {results[3]}"
+        answer = results[3] if not isinstance(results[3], Exception) else f"Error answering question: {results[3]}"
 
     return AnalyzeResponse(
         repo=repo_name,
